@@ -1,0 +1,8 @@
+Getting started
+https://blog.paperspace.com/getting-started-with-openai-gym/
+
+OpenAI Gym Exercises
+https://www.gymlibrary.dev/environments/classic_control/cart_pole/
+
+#powershell execution policy
+Set-ExecutionPolicy Unrestricted -Scope CurrentUser
