@@ -6,3 +6,7 @@ https://www.gymlibrary.dev/environments/classic_control/cart_pole/
 
 #powershell execution policy
 Set-ExecutionPolicy Unrestricted -Scope CurrentUser
+
+pip install gym[classic_control]
+pip install gym\[atari\]
+pip install autorom[accept-rom-license]

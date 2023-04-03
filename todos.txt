@@ -1,0 +1,1 @@
+Assign negative reward to state that caused termination
