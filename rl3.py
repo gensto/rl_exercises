@@ -2,8 +2,8 @@ import time
 import gym
 import numpy as np
 
-# env = gym.make("CartPole-v1", render_mode='human')
-env = gym.make("CartPole-v1")
+env = gym.make("CartPole-v1", render_mode='human')
+# env = gym.make("CartPole-v1")
 print(env.action_space.n)
 print("Observation Space: ", env.observation_space)
 print("Action Space       ", env.action_space)
@@ -93,7 +93,6 @@ if __name__ == "__main__":
         if i % 50 == 0:
             average_reward = total_reward / 50
             print(f"Average reward for past 50 episodes: {average_reward}, episode count: {episode_count}")
-            episode_count += 50
             total_reward = 0
         obs = env.reset()
         done = False
@@ -121,5 +120,7 @@ if __name__ == "__main__":
                 # q_table[last_state, last_action] += step_size * (-10 + gamma * max_next_state_action_value - last_state_action_value)
                 # q_table[tuple(last_state) + (last_action,)] = (1 - step_size) * q_table[tuple(last_state) + (last_action,)] + step_size * (-100)
                 q_table[tuple(last_state) + (last_action,)] += step_size * (-100)
+                episode_count += 1
+                print(f"Episode count: {episode_count}")
                 
     env.close()
