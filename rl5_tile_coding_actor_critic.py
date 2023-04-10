@@ -35,6 +35,16 @@ def softmax_policy(state_tiles):
     chosen_action = np.random.choice(len(action_preferences), p=action_preferences)
     return chosen_action
 
+def gradient_of_log_of_softmax(state_tiles, action):
+    feature_vector = np.zeros(iht_size)
+    feature_vector[state_tiles] = 1
+    softmax_distribution_sum = 0
+    
+    for i, _ in enumerate(actions):
+        feature_vector_b = np.zeros(iht_size)
+        feature_vector_b[state_tiles] = 1
+        softmax_distribution_sum += 
+
 if __name__ == "__main__":
     iht_size = 8192
     iht = IHT(iht_size)
