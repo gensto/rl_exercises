@@ -62,10 +62,12 @@ if __name__ == "__main__":
         last_state = get_discrete_state(obs[0])
         total_reward = 0
         step_count = 0
+        total_step_count = 0
         
         while not done:
             if step_count % 500 == 0:
-                print(f"Avg reward: {total_reward / 500}")
+                total_step_count += 500
+                print(f"Avg reward: {total_reward / 500}, step_count: {total_step_count}")
                 step_count = 0
             action = e_greedy_policy(last_state)
             # action = softmax_policy(last_state)
