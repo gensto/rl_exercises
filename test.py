@@ -1,7 +1,7 @@
 import numpy as np
 
-Observation = [10,10,10,10]
-q_table = np.random.uniform(low=0, high=1, size=(Observation + [2]))
+arr = np.array([[1, 2, 3, 4, 5], [4,5,6,7,8]])
 
-discreteState = (7,8,5,3)
-print(q_table[discreteState + (1,)])
+print(np.sum(arr[:, (1,2)], axis=1) - 3)
+
+print(type(arr))

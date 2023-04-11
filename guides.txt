@@ -4,6 +4,8 @@ https://blog.paperspace.com/getting-started-with-openai-gym/
 OpenAI Gym Exercises
 https://www.gymlibrary.dev/environments/classic_control/cart_pole/
 
+https://www.tensorflow.org/tutorials/reinforcement_learning/actor_critic
+
 #powershell execution policy
 Set-ExecutionPolicy Unrestricted -Scope CurrentUser
 
