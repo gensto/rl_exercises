@@ -6,6 +6,9 @@ https://www.gymlibrary.dev/environments/classic_control/cart_pole/
 
 https://www.tensorflow.org/tutorials/reinforcement_learning/actor_critic
 
+logsumexp trick
+https://gregorygundersen.com/blog/2020/02/09/log-sum-exp/
+
 #powershell execution policy
 Set-ExecutionPolicy Unrestricted -Scope CurrentUser
 

@@ -38,9 +38,9 @@ def softmax_policy(state_tiles):
         action_prob = softmax_probability(state_tiles, i)
         # print(f"Action i: {i}, prob: {action_prob}, preference val: {softmax_numerical_preference(state_tiles, i)}")
         action_preferences.append(action_prob)
-
+    # print(f"Before: {action_preferences}")
+    # print(f"After: {action_preferences}")
     chosen_action = np.random.choice(len(action_preferences), p=action_preferences)
-    # print(action_preferences)
     return chosen_action
 
 def softmax_numerical_preference(state_tiles, action):
@@ -48,9 +48,12 @@ def softmax_numerical_preference(state_tiles, action):
 
 def softmax_probability(state_tiles, action):
     max_action_val = np.max(np.sum(actor_weights[:, state_tiles], axis=1))
+    # print(f"max act val: {max_action_val}")
+    print(f"sum: {np.sum(actor_weights[:,state_tiles], axis=1)}")
+    # print(f"sum of action 1: {np.exp(np.sum(actor_weights[1, tuple(state_tiles)]))}")
+    # print(f"sum of all act vals: {np.exp(np.sum(actor_weights[:,state_tiles], axis=1) - max_action_val)}")
     numerator = np.exp(np.sum(actor_weights[action][state_tiles]) - max_action_val)
     denominator = np.sum(np.exp(np.sum(actor_weights[:,state_tiles], axis=1) - max_action_val))
-    
     return numerator / denominator
 
 def gradient_of_log_of_softmax(state_tiles, action):
@@ -78,10 +81,10 @@ if __name__ == "__main__":
     epsilon = 0.9
     num_of_tilings = 32
     step_size = 0.01
-    reward_step_size = 0.1 /num_of_tilings
-    critic_step_size = 0.1 / num_of_tilings
-    actor_step_size = 0.1
-    gamma = 0.9
+    reward_step_size = 0.1 / num_of_tilings
+    critic_step_size = 2 / num_of_tilings
+    actor_step_size = 0.25 / num_of_tilings
+    gamma = 0.4
 
     critic_weights = np.ones((iht_size))
     actor_weights = np.ones((num_of_actions, iht_size))
