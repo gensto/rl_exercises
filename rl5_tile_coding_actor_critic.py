@@ -4,10 +4,10 @@ import gym
 import numpy as np
 import matplotlib.pyplot as plt
 
-np.random.seed(123)
-# env = gym.make('Pendulum-v1', g=9.81, render_mode='human')
-env = gym.make('Pendulum-v1', g=9.81)
-env.action_space.seed(42)
+# np.random.seed(123)
+env = gym.make('Pendulum-v1', g=9.81, render_mode='human')
+# env = gym.make('Pendulum-v1', g=9.81)
+# env.action_space.seed(42)
 
 def scale_state(state):
     #scale values to [0,1] then multiply by partition width
@@ -26,30 +26,41 @@ def e_greedy_policy(state_tiles):
     else:
         return np.random.randint(0, num_of_actions)
 
+def logsumexp(x):
+    c = x.max()
+    return c + np.log(np.sum(np.exp(x - c)))
+
 def softmax_policy(state_tiles):
-    action_preferences = []
+    # action_preferences = []
     
     # for i, action in enumerate(actions):
     #     numerator = np.exp(np.sum(actor_weights[i][state_tiles]))
     #     denominator = np.sum(np.exp(np.sum(actor_weights[:,state_tiles], axis=1)))
     #     action_preference = numerator / denominator
     #     action_preferences.append(action_preference)
-    for i, action in enumerate(actions):
-        action_prob = softmax_probability(state_tiles, i)
-        # print(f"Action i: {i}, prob: {action_prob}, preference val: {softmax_numerical_preference(state_tiles, i)}")
-        action_preferences.append(action_prob)
+    # for i, action in enumerate(actions):
+    #     action_prob = softmax_probability(state_tiles, i)
+    #     # print(f"Action i: {i}, prob: {action_prob}, preference val: {softmax_numerical_preference(state_tiles, i)}")
+    #     action_preferences.append(action_prob)
     # print(f"Before: {action_preferences}")
     # print(f"After: {action_preferences}")
+    preference_values = np.sum(actor_weights[:,state_tiles], axis=1)
+    action_preferences = np.exp(preference_values - logsumexp(preference_values))
     chosen_action = np.random.choice(len(action_preferences), p=action_preferences)
     return chosen_action
 
 def softmax_numerical_preference(state_tiles, action):
     return np.sum(actor_weights[action][state_tiles])
 
+def softmax_probabilities(state_tiles):
+    preference_values = np.sum(actor_weights[:,state_tiles], axis=1)
+    action_preferences = np.exp(preference_values - logsumexp(preference_values))
+    return action_preferences
+
 def softmax_probability(state_tiles, action):
     max_action_val = np.max(np.sum(actor_weights[:, state_tiles], axis=1))
     # print(f"max act val: {max_action_val}")
-    print(f"sum: {np.sum(actor_weights[:,state_tiles], axis=1)}")
+    # print(f"sum: {np.sum(actor_weights[:,state_tiles], axis=1)}")
     # print(f"sum of action 1: {np.exp(np.sum(actor_weights[1, tuple(state_tiles)]))}")
     # print(f"sum of all act vals: {np.exp(np.sum(actor_weights[:,state_tiles], axis=1) - max_action_val)}")
     numerator = np.exp(np.sum(actor_weights[action][state_tiles]) - max_action_val)
@@ -82,20 +93,21 @@ if __name__ == "__main__":
     num_of_tilings = 32
     step_size = 0.01
     reward_step_size = 0.1 / num_of_tilings
-    critic_step_size = 2 / num_of_tilings
+    critic_step_size = .5 / num_of_tilings
     actor_step_size = 0.25 / num_of_tilings
-    gamma = 0.4
+    gamma = 0.5
 
     critic_weights = np.ones((iht_size))
     actor_weights = np.ones((num_of_actions, iht_size))
     weights = np.ones((num_of_actions, iht_size))
     partition_width = 8
 
-    num_of_episodes = 1000
+    num_of_episodes =1000
     rewards_per_episode = []
     terminate = False
     for i in range(num_of_episodes):
-        last_state = scale_state(env.reset(seed=42)[0])
+        # last_state = scale_state(env.reset(seed=42)[0])
+        last_state = scale_state(env.reset()[0])
         last_state_tiles = tiles(iht, num_of_tilings, last_state)
         # last_action = e_greedy_policy(last_state_tiles)
         last_action = softmax_policy(last_state_tiles) # 0 pushes it left, 1, does nothing, 2 pushes it right
@@ -104,6 +116,7 @@ if __name__ == "__main__":
         step_count = 0
         avg_reward = 0
         truncated = False
+        # print(f"ep: {i}")
 
         while not truncated:
             # last_state_action_value = np.sum(weights[last_action][last_state_tiles])  
@@ -149,6 +162,7 @@ if __name__ == "__main__":
             
             if truncated:
                 rewards_per_episode.append(total_reward)
+                print(total_reward)
             
             # time.sleep(1)
             # if step_count % 500 == 0:
