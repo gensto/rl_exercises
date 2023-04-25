@@ -27,9 +27,11 @@ def get_state_action_values(state):
             state_value += relu((np.dot(state_action_vector, weights))) * w2[i]
         state_action_values.append(state_value)
 
-def e_greedy_policy():
+def e_greedy_policy(state):
     if np.random.rand() < 0.9:
-        
+        return np.argmax(get_state_action_values(state))
+    else:
+        return np.random.randint(2)
 
 if __name__ == "__main__":
     w1 = np.ones((10, 8))
@@ -39,3 +41,9 @@ if __name__ == "__main__":
     
     for n in range(num_of_episodes):
         last_state = env.reset(seed=42)[0]
+        last_action = e_greedy_policy(last_state)
+        done = False
+        
+        while not done:
+            new_state, reward, done, truncated, info = env.step(last_action)
+            new_action = e_greedy_policy(new_state)
