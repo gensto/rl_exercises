@@ -71,22 +71,22 @@ def e_greedy_policy_double_q(state):
     return chosen_action
 
 if __name__ == "__main__":
-    q_table = np.random.uniform(low=-2, high=0, size=([20, 20, 20, 20] + [env.action_space.n]))
-    q_table2 = np.random.uniform(low=-2, high=0, size=([20, 20, 20, 20] + [env.action_space.n]))
+    q_table = np.random.uniform(low=0, high=1, size=([20, 20, 20, 20] + [env.action_space.n]))
+    q_table2 = np.random.uniform(low=0, high=1, size=([20, 20, 20, 20] + [env.action_space.n]))
     # q_table = np.zeros([40, 40, 40, 40, 2])
     ranges = [[-4.8, 4,8], [-4, 4], [-0.418, 0.418], [-5, 5]]
     # ranges = [[-2.4, 2.4], [-5, 5], [-0.21, 0.21], [-5, 5]]
-    epsilon = 0.90
+    epsilon = 0.9
     gamma = 0.5
     num_of_bins = 20
     bin_edges = create_bin_edges(ranges, num_of_bins)
     print(bin_edges[0])
-    step_size = 0.5
+    step_size = 0.1
     average_reward = 0
     total_reward = 0
     episode_count = 0
     rewards_per_episode = []
-    for i in range(1000):
+    for i in range(2000):
         if i % 50 == 0:
             episode_count += 50
             # print(f"Average reward for past 50 episodes: {average_reward}, total eps: {episode_count}")
@@ -121,7 +121,9 @@ if __name__ == "__main__":
                     q_table[last_state + (last_action,)] += step_size * (-100 + gamma * q_table[last_state + (last_action,)])
                 else:
                     q_table[last_state + (last_action,)] += step_size * (-100 + gamma * q_table[last_state + (last_action,)])
-
+        if epsilon < 0.999:
+            epsilon *= 1.0001
+    print(f"Epsilon: {epsilon}")  
     plt.plot(rewards_per_episode)
     plt.xlabel("Episode")
     plt.ylabel("Total Reward")
