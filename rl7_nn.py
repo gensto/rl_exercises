@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 # env = gym.make('Acrobot-v1')
 np.random.seed(123)
-env = gym.make("CartPole-v0")
+env = gym.make("CartPole-v1")
 env.action_space.seed(42)
 print(env.action_space.n)
 
@@ -18,14 +18,40 @@ def relu(x):
         return x
 
 def get_state_action_values(state):
-    state_action_values = np.array([])
+    print(f"Last state: {state}")
+    state_action_values = []
     for i in range(2):
+        state_action_vector = np.zeros(8)
         state_action_vector[i*4:(i*4)+4] = state
         state_value = 0
-        for i, weights in enumerate(w1):
-            state_action_vector = np.zeros(8)
-            state_value += relu((np.dot(state_action_vector, weights))) * w2[i]
+        for j, weights in enumerate(w1):
+            state_value += relu((np.dot(state_action_vector, weights))) * w2[j]
         state_action_values.append(state_value)
+    return np.array(state_action_values)
+
+def get_gradients_w1(td_target, state, action, state_action_value):
+    hidden_layer_inputs = np.zeros((10))
+    state_action_vector = np.zeros(8)
+    state_action_vector[action*4:(action*4)+4] = state
+    for i, weights in enumerate(w1):
+        hidden_layer_input = np.dot(weights, state_action_vector)
+        if hidden_layer_input > 0:
+            hidden_layer_input = 1
+        else:
+            hidden_layer_input = 0
+        hidden_layer_inputs[i] = hidden_layer_input
+    return 2 * (td_target - state_action_value) * w2 * hidden_layer_inputs
+
+def get_gradients_w2(td_target, state, action, state_action_value):
+    hidden_layer_inputs = np.zeros((10))
+    state_action_vector = np.zeros(8)
+    state_action_vector[action*4:(action*4)+4] = state
+    for i, weights in enumerate(w1):
+        hidden_layer_input = np.dot(weights, state_action_vector)
+        if hidden_layer_input < 0:
+            hidden_layer_input = 0
+        hidden_layer_inputs[i] = hidden_layer_input
+    return 2 * (td_target - state_action_value) * hidden_layer_inputs
 
 def e_greedy_policy(state):
     if np.random.rand() < 0.9:
@@ -37,6 +63,8 @@ if __name__ == "__main__":
     w1 = np.ones((10, 8))
     w2 = np.ones((10))
     
+    gamma = 0.5
+    step_size = 0.1
     num_of_episodes = 100
     
     for n in range(num_of_episodes):
@@ -45,5 +73,22 @@ if __name__ == "__main__":
         done = False
         
         while not done:
+            last_state_action_value = get_state_action_values(last_state)[last_action]
             new_state, reward, done, truncated, info = env.step(last_action)
-            new_action = e_greedy_policy(new_state)
+            if done:
+                td_target = -20 + gamma * new_state_action_value
+                w1_gradients = get_gradients_w1(td_target, last_state, last_state_action_value)
+                w2_gradients = get_gradients_w2(td_target, last_state, last_state_action_value)    
+            else:
+                new_action = e_greedy_policy(new_state)
+                new_state_action_value = get_state_action_values(new_state)[new_action]
+                td_target = reward + gamma * new_state_action_value
+                w1_gradients = get_gradients_w1(td_target, last_state, last_action, last_state_action_value)
+                w2_gradients = get_gradients_w2(td_target, last_state, last_action, last_state_action_value)
+                for weights in w1:
+                    weights -= step_size * w1_gradients
+                for weights in w2:
+                    weights -= step_size * w2_gradients
+                    
+                last_state = new_state
+                last_action = new_action
