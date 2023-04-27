@@ -18,7 +18,6 @@ def relu(x):
         return x
 
 def get_state_action_values(state):
-    print(f"Last state: {state}")
     state_action_values = np.zeros((2))
     for i in range(2):
         final_value = 0
@@ -37,12 +36,12 @@ def get_gradients_w1(td_target, state, action, state_action_value):
     state_action_vector = np.zeros((8))
     state_action_vector[action*4:(action*4)+4] = state
     for i, weights in enumerate(w1):
-        hidden_layer_inputs += state_action_vector[i] * weights
-    for i, hidden_layer_inputs in enumerate(hidden_layer_inputs):
-        if hidden_layer_inputs > 0:
-            hidden_layer_inputs[i] = 1
+        hidden_layer_inputs += float(state_action_vector[i]) * weights
+    for i, hidden_layer_input in enumerate(hidden_layer_inputs):
+        if hidden_layer_input > 0:
+            hidden_layer_inputs[i] = 1.0
         else:
-            hidden_layer_inputs[i] = 0
+            hidden_layer_inputs[i] = 0.0
     return 2 * (td_target - state_action_value) * w2 * hidden_layer_inputs
 
 def get_gradients_w2(td_target, state, action, state_action_value):
@@ -51,8 +50,8 @@ def get_gradients_w2(td_target, state, action, state_action_value):
     state_action_vector[action*4:(action*4)+4] = state
     for i, weights in enumerate(w1):
         hidden_layer_inputs += state_action_vector[i] * weights
-    for i, hidden_layer_inputs in enumerate(hidden_layer_inputs):
-        if hidden_layer_inputs < 0:
+    for i, hidden_layer_input in enumerate(hidden_layer_inputs):
+        if hidden_layer_input < 0:
             hidden_layer_inputs[i] = 0
             
     return 2 * (td_target - state_action_value) * hidden_layer_inputs
@@ -69,20 +68,22 @@ if __name__ == "__main__":
     
     gamma = 0.5
     step_size = 0.1
-    num_of_episodes = 100
+    num_of_episodes = 1000
+    rewards_per_episode = []
     
     for n in range(num_of_episodes):
         last_state = env.reset(seed=42)[0]
         last_action = e_greedy_policy(last_state)
         done = False
+        total_rewards = 0
         
         while not done:
             last_state_action_value = get_state_action_values(last_state)[last_action]
             new_state, reward, done, truncated, info = env.step(last_action)
             if done:
                 td_target = -20 + gamma * new_state_action_value
-                w1_gradients = get_gradients_w1(td_target, last_state, last_state_action_value)
-                w2_gradients = get_gradients_w2(td_target, last_state, last_state_action_value)    
+                w1_gradients = get_gradients_w1(td_target, last_state, last_action, last_state_action_value)
+                w2_gradients = get_gradients_w2(td_target, last_state, last_action, last_state_action_value)    
             else:
                 new_action = e_greedy_policy(new_state)
                 new_state_action_value = get_state_action_values(new_state)[new_action]
@@ -96,3 +97,15 @@ if __name__ == "__main__":
                     
                 last_state = new_state
                 last_action = new_action
+            total_rewards += reward
+        rewards_per_episode.append(total_rewards)
+    
+    plt.plot(rewards_per_episode)
+    plt.xlabel("Episode")
+    plt.ylabel("Total Reward")
+    plt.title("Rewards per Episode")
+    # xtick_positions = np.arange(0, 5000 / 50)
+    # xtick_labels = xtick_positions * 50
+    # plt.xticks(xtick_positions, xtick_labels)
+    plt.show()           
+    env.close()
