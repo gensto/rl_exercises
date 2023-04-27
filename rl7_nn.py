@@ -19,27 +19,30 @@ def relu(x):
 
 def get_state_action_values(state):
     print(f"Last state: {state}")
-    state_action_values = []
+    state_action_values = np.zeros((2))
     for i in range(2):
+        final_value = 0
+        relu_inputs = np.zeros((10))
         state_action_vector = np.zeros(8)
         state_action_vector[i*4:(i*4)+4] = state
-        state_value = 0
         for j, weights in enumerate(w1):
-            state_value += relu((np.dot(state_action_vector, weights))) * w2[j]
-        state_action_values.append(state_value)
-    return np.array(state_action_values)
+            relu_inputs += state_action_vector[j] * weights
+        for j, relu_input in enumerate(relu_inputs):
+            final_value += relu(relu_input) * w2[j]
+        state_action_values[i] = final_value
+    return state_action_values
 
 def get_gradients_w1(td_target, state, action, state_action_value):
     hidden_layer_inputs = np.zeros((10))
-    state_action_vector = np.zeros(8)
+    state_action_vector = np.zeros((8))
     state_action_vector[action*4:(action*4)+4] = state
     for i, weights in enumerate(w1):
-        hidden_layer_input = np.dot(weights, state_action_vector)
-        if hidden_layer_input > 0:
-            hidden_layer_input = 1
+        hidden_layer_inputs += state_action_vector[i] * weights
+    for i, hidden_layer_inputs in enumerate(hidden_layer_inputs):
+        if hidden_layer_inputs > 0:
+            hidden_layer_inputs[i] = 1
         else:
-            hidden_layer_input = 0
-        hidden_layer_inputs[i] = hidden_layer_input
+            hidden_layer_inputs[i] = 0
     return 2 * (td_target - state_action_value) * w2 * hidden_layer_inputs
 
 def get_gradients_w2(td_target, state, action, state_action_value):
@@ -47,10 +50,11 @@ def get_gradients_w2(td_target, state, action, state_action_value):
     state_action_vector = np.zeros(8)
     state_action_vector[action*4:(action*4)+4] = state
     for i, weights in enumerate(w1):
-        hidden_layer_input = np.dot(weights, state_action_vector)
-        if hidden_layer_input < 0:
-            hidden_layer_input = 0
-        hidden_layer_inputs[i] = hidden_layer_input
+        hidden_layer_inputs += state_action_vector[i] * weights
+    for i, hidden_layer_inputs in enumerate(hidden_layer_inputs):
+        if hidden_layer_inputs < 0:
+            hidden_layer_inputs[i] = 0
+            
     return 2 * (td_target - state_action_value) * hidden_layer_inputs
 
 def e_greedy_policy(state):
@@ -60,7 +64,7 @@ def e_greedy_policy(state):
         return np.random.randint(2)
 
 if __name__ == "__main__":
-    w1 = np.ones((10, 8))
+    w1 = np.ones((8, 10))
     w2 = np.ones((10))
     
     gamma = 0.5
