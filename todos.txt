@@ -1,1 +1,4 @@
-Try cartpole with the actor critic
+Figure out matrix multiplication
+
+But anyway, the w1_grad needs to return a 8x10 matrix. Figure out how to assemble the
+matrix multiplication between w2 and the state action vector to make it 8x10
