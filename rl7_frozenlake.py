@@ -6,10 +6,12 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 # env = gym.make('Acrobot-v1')
+# np.random.seed(123)
 np.random.seed(123)
-env = gym.make("CartPole-v1")
-# env = gym.make("CartPole-v1", render_mode='human')
+env = gym.make('CliffWalking-v0', render_mode='human')
 env.action_space.seed(42)
+# env = gym.make("CartPole-v1", render_mode='human')
+# env.action_space.seed(42)
 print(env.action_space.n)
 
 # def relu(x):
@@ -19,13 +21,13 @@ print(env.action_space.n)
 #         return x
 
 def relu(inputs):
-    return np.maximum(inputs * 0.01, inputs)
+    return np.maximum(0, inputs)
 
 def get_state_action_values(state):
-    state_action_values = np.zeros((2))
-    for i in range(2):
-        state_action_vector = np.zeros((1, 8))
-        state_action_vector[0][i*4:(i*4)+4] = state
+    state_action_values = np.zeros((4))
+    for i in range(4):
+        state_action_vector = np.zeros((1, 192))
+        state_action_vector[0][((i * 48) + state) - 1] = 1
         # relu_inputs = np.dot(np.transpose(w1), state_action_vector)
         relu_inputs = np.dot(state_action_vector, w1)
         relu_outputs = relu(relu_inputs)
@@ -44,9 +46,8 @@ def get_state_action_values(state):
     return state_action_values
 
 def get_gradients_w1(td_target, state, action, state_action_value):
-    hidden_layer_inputs = np.zeros((10))
-    state_action_vector = np.zeros((1, 8))
-    state_action_vector[0][action*4:(action*4)+4] = state
+    state_action_vector = np.zeros((1, 48*4))
+    state_action_vector[0][((action * 48) + state) - 1] = 1
     # hidden_layer_inputs = np.dot(np.transpose(w1), state_action_vector)
     # # for i, weights in enumerate(w1):
     # #     hidden_layer_inputs += state_action_vector[i] * weights
@@ -61,12 +62,12 @@ def get_gradients_w1(td_target, state, action, state_action_value):
     # print(f"W2: {w2}")
     # print(f"Mult: {(w2 * state_action_vector).shape}")
     # print(f"W1 grad: {2 * (td_target - state_action_value) * np.transpose(state_action_vector) * np.transpose(w2)}")
+    print(w2)
     return (td_target - state_action_value) * np.transpose(state_action_vector) * np.transpose(w2)
 
 def get_gradients_w2(td_target, state, action, state_action_value):
-    hidden_layer_inputs = np.zeros((10))
-    state_action_vector = np.zeros((1, 8))
-    state_action_vector[0][action*4:(action*4)+4] = state
+    state_action_vector = np.zeros((1, 48*4))
+    state_action_vector[0][((action * 48) + state) - 1] = 1
     relu_inputs = np.dot(state_action_vector, w1)
     relu_outputs = np.transpose(relu(relu_inputs))
 
@@ -86,7 +87,7 @@ def e_greedy_policy(state):
     if np.random.rand() < 0.9:
         return np.argmax(get_state_action_values(state))
     else:
-        return np.random.randint(2)
+        return np.random.randint(4)
     
 def get_max_state_action_value(state):
     return np.max(get_state_action_values(state))
@@ -116,8 +117,8 @@ def clip_by_norm(grad):
 if __name__ == "__main__":
     # w1 = np.ones((8, 10))
     # w2 = np.ones((10, 1))
-    w1 = np.random.randn(8, 10) * 0.01
-    w2 = np.random.randn(10, 1) * 0.01
+    w1 = np.random.randn(192, 50) * 0.01
+    w2 = np.random.randn(50, 1) * 0.01
 
     ranges = [[-4.8, 4,8], [-4, 4], [-0.418, 0.418], [-5, 5]]
     gamma = 0.5
@@ -127,14 +128,13 @@ if __name__ == "__main__":
     total_rewards = 0
     
     for n in range(num_of_episodes):
-        last_state = normalize_state_vector(env.reset(seed=42)[0])
+        last_state = env.reset(seed=42)[0]
         last_action = e_greedy_policy(last_state)
         done = False
         
         while not done:
             last_state_action_value = get_state_action_values(last_state)[last_action]
             new_state, reward, done, truncated, info = env.step(last_action)
-            new_state = normalize_state_vector(new_state)
             if done:
                 max_state_action_value = get_max_state_action_value(new_state)
                 td_target = -100
@@ -146,6 +146,9 @@ if __name__ == "__main__":
                 new_action = e_greedy_policy(new_state)
                 # new_state_action_value = get_state_action_values(new_state)[new_action]
                 max_state_action_value = get_max_state_action_value(new_state)
+                state_action_values = get_state_action_values(last_state)
+                print(f"Taking action: {last_action}")
+                print(f"State action values for state {last_state}: Left: {state_action_values[0]}, right: {state_action_values[1]}, up: {state_action_values[2]}, down: {state_action_values[3]}")
                 td_target = reward + gamma * max_state_action_value
                 w1_gradients = clip_by_norm(get_gradients_w1(td_target, last_state, last_action, last_state_action_value))
                 w2_gradients = clip_by_norm(get_gradients_w2(td_target, last_state, last_action, last_state_action_value))
