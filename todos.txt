@@ -2,3 +2,6 @@ Figure out matrix multiplication
 
 But anyway, the w1_grad needs to return a 8x10 matrix. Figure out how to assemble the
 matrix multiplication between w2 and the state action vector to make it 8x10
+
+Convert frozenlake to a semi gradient TD problem, so only calculate state values
+Read: https://towardsdatascience.com/deep-q-learning-for-the-cliff-walking-problem-b54835409046

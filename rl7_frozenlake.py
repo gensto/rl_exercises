@@ -27,7 +27,7 @@ def get_state_action_values(state):
     state_action_values = np.zeros((4))
     for i in range(4):
         state_action_vector = np.zeros((1, 192))
-        state_action_vector[0][((i * 48) + state) - 1] = 1
+        state_action_vector[0][((i * 48) + state)] = 1
         # relu_inputs = np.dot(np.transpose(w1), state_action_vector)
         relu_inputs = np.dot(state_action_vector, w1)
         relu_outputs = relu(relu_inputs)
@@ -62,12 +62,11 @@ def get_gradients_w1(td_target, state, action, state_action_value):
     # print(f"W2: {w2}")
     # print(f"Mult: {(w2 * state_action_vector).shape}")
     # print(f"W1 grad: {2 * (td_target - state_action_value) * np.transpose(state_action_vector) * np.transpose(w2)}")
-    print(w2)
     return (td_target - state_action_value) * np.transpose(state_action_vector) * np.transpose(w2)
 
 def get_gradients_w2(td_target, state, action, state_action_value):
     state_action_vector = np.zeros((1, 48*4))
-    state_action_vector[0][((action * 48) + state) - 1] = 1
+    state_action_vector[0][((action * 48) + state)] = 1
     relu_inputs = np.dot(state_action_vector, w1)
     relu_outputs = np.transpose(relu(relu_inputs))
 
@@ -113,6 +112,11 @@ def clip_by_norm(grad):
         grad = grad * (clip_norm / grad_norm)
     return grad
 
+def is_in_cliff(state):
+    if state > 36 and state < 48:
+        return True
+    return False
+
 
 if __name__ == "__main__":
     # w1 = np.ones((8, 10))
@@ -122,7 +126,7 @@ if __name__ == "__main__":
 
     ranges = [[-4.8, 4,8], [-4, 4], [-0.418, 0.418], [-5, 5]]
     gamma = 0.5
-    step_size = 0.1
+    step_size = 0.001
     num_of_episodes = 1000
     rewards_per_episode = []
     total_rewards = 0
@@ -135,29 +139,32 @@ if __name__ == "__main__":
         while not done:
             last_state_action_value = get_state_action_values(last_state)[last_action]
             new_state, reward, done, truncated, info = env.step(last_action)
-            if done:
-                max_state_action_value = get_max_state_action_value(new_state)
-                td_target = -100
-                w1_gradients = clip_by_norm(get_gradients_w1(td_target, last_state, last_action, last_state_action_value))
-                w2_gradients = clip_by_norm(get_gradients_w2(td_target, last_state, last_action, last_state_action_value))
-                w1 -= step_size * w1_gradients
-                w2 -= step_size * w2_gradients
-            else:
-                new_action = e_greedy_policy(new_state)
-                # new_state_action_value = get_state_action_values(new_state)[new_action]
-                max_state_action_value = get_max_state_action_value(new_state)
-                state_action_values = get_state_action_values(last_state)
-                print(f"Taking action: {last_action}")
-                print(f"State action values for state {last_state}: Left: {state_action_values[0]}, right: {state_action_values[1]}, up: {state_action_values[2]}, down: {state_action_values[3]}")
-                td_target = reward + gamma * max_state_action_value
-                w1_gradients = clip_by_norm(get_gradients_w1(td_target, last_state, last_action, last_state_action_value))
-                w2_gradients = clip_by_norm(get_gradients_w2(td_target, last_state, last_action, last_state_action_value))
-                # print(w1_gradients)
-                w1 -= step_size * w1_gradients
-                w2 -= step_size * w2_gradients
+            print(reward)
+            reward = reward / 100
+            # if last_state == new_state:
+            #     max_state_action_value = get_max_state_action_value(new_state)
+            #     new_action = e_greedy_policy(new_state)
+            #     td_target = -100 + gamma * max_state_action_value
+            #     w1_gradients = clip_by_norm(get_gradients_w1(td_target, last_state, last_action, last_state_action_value))
+            #     w2_gradients = clip_by_norm(get_gradients_w2(td_target, last_state, last_action, last_state_action_value))
+            #     w1 += step_size * w1_gradients
+            #     w2 += step_size * w2_gradients
+            # else:
+            new_action = e_greedy_policy(new_state)
+            # new_state_action_value = get_state_action_values(new_state)[new_action]
+            max_state_action_value = get_max_state_action_value(new_state)
+            state_action_values = get_state_action_values(last_state)
+            # print(f"Taking action: {last_action}")
+            print(f"State action values for state {last_state}: up(0): {state_action_values[0]}, right(1): {state_action_values[1]}, down(2): {state_action_values[2]}, left(3): {state_action_values[3]}")
+            td_target = reward + gamma * max_state_action_value
+
+            w1_gradients = clip_by_norm(get_gradients_w1(td_target, last_state, last_action, last_state_action_value))
+            w2_gradients = clip_by_norm(get_gradients_w2(td_target, last_state, last_action, last_state_action_value))
+            w1 += step_size * w1_gradients
+            w2 += step_size * w2_gradients
                     
-                last_state = new_state
-                last_action = new_action
+            last_state = new_state
+            last_action = new_action
             total_rewards += reward
         if n % 50 == 0:
             print(total_rewards)
