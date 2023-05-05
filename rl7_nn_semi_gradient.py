@@ -9,7 +9,7 @@ def forward_prop(state):
     feature_vector = np.zeros((50, 1))
     feature_vector[state][0] = 1
 
-    return np.dot(relu(np.dot(np.transpose(feature_vector), weights[0]["W"])), weights[1]["W"])
+    return np.matmul(relu(np.matmul(np.transpose(feature_vector), weights[0]["W"])), weights[1]["W"])
 
 def get_grads(state):
     feature_vector = np.zeros((50, 1))
@@ -17,8 +17,8 @@ def get_grads(state):
     state_value = forward_prop(state)[0, 0]
     
     return np.array([
-        np.dot(feature_vector, np.transpose(weights[1]["W"])),
-        np.dot(relu(np.transpose(weights[0]["W"])), feature_vector)
+        np.transpose(np.matmul(weights[1]["W"], np.transpose(feature_vector))),
+        np.matmul(relu(np.transpose(weights[0]["W"])), feature_vector)
     ])
 
 def get_state_values():
