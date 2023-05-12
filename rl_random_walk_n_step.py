@@ -1,4 +1,6 @@
 import numpy as np
+np.random.seed(123)
+import matplotlib.pyplot as plt
 
 def relu(inputs):
     inputs[0][inputs[0] < 0] = 0
@@ -11,6 +13,11 @@ def forward_prop(state):
     
     return np.matmul(relu(np.matmul(np.transpose(feature_vector), weights[0]["W"])), weights[1]["W"]) 
 
+def get_state_values():
+    for i in range(state_space_size - 1):
+        if i > 0:
+            print(f"State {i} value: {forward_prop(i)[0,0]}")
+
 def get_grads(state, td_target, pred):
     feature_vector = np.zeros((state_space_size, 1))
     feature_vector[state, 0] = 1
@@ -21,28 +28,28 @@ def get_grads(state, td_target, pred):
 
 if __name__ == "__main__":
     state_space_size = 10
-    
-    num_of_episodes = 50
-    gamma = 0.5
-    step_size = 0.01
+    num_of_episodes = 4000
+    gamma = 0.7
+    step_size = 0.001
     
     weights = [
         {
-            "W": np.ones((state_space_size, 40))
+            "W": np.ones((state_space_size, 30))
         },
         {
-            "W": np.ones((40,1))        
+            "W": np.ones((30,1))        
         }
     ]
+    
+    state_values = []
     
     for n in range(num_of_episodes):
         T = float('inf')
         t = 0
-        n = 3
+        n = 10
         tau = 0
         rewards_and_next_states = []
         current_state = int(state_space_size / 2)
-        rewards_and_next_states
         
         while tau < T - 1:
             if t < T:
@@ -54,9 +61,11 @@ if __name__ == "__main__":
                 if next_state == state_space_size - 1:
                     T = t + 1
                     reward = 10
+                    next_state_value = 0
                 elif next_state == 0:
                     T = t + 1
                     reward = -10
+                    next_state_value = 0
                 rewards_and_next_states.append((current_state, reward, next_state))
                 
             tau = t - n + 1
@@ -65,8 +74,9 @@ if __name__ == "__main__":
                 i  = tau + 1
                 while i < min(tau + n, T):
                     G += pow(gamma, i - tau - 1) * rewards_and_next_states[i][1]
+                    i += 1
                 if tau + n < T:
-                    state_tau_plus_n_value = forward_prop(rewards_and_next_states[tau + n][0])[0,0]
+                    state_tau_plus_n_value = forward_prop(rewards_and_next_states[tau + n - 1][0])[0,0]
                     G += pow(gamma, n) * state_tau_plus_n_value
                     
                 grads = get_grads(current_state, G, next_state_value)
@@ -75,3 +85,14 @@ if __name__ == "__main__":
                 weights[1]["W"] += step_size * (G - state_tau_value) * grads[1]
             current_state = next_state
             t += 1
+        state_values.append(forward_prop(6)[0,0])
+    get_state_values()
+    
+    # plt.plot(state_values)
+    # plt.xlabel("Episode")
+    # plt.ylabel("Total Reward")
+    # plt.title("Rewards per Episode")
+    # # xtick_positions = np.arange(0, 5000 / 50)
+    # # xtick_labels = xtick_positions * 50
+    # # plt.xticks(xtick_positions, xtick_labels)
+    # plt.show()          
