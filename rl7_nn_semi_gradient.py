@@ -1,4 +1,8 @@
 import numpy as np
+import time
+import matplotlib.pyplot as plt
+
+# np.random.seed(42)
 
 def relu(inputs):
     inputs[0][inputs[0] < 0] = 0
@@ -6,30 +10,33 @@ def relu(inputs):
     return inputs
 
 def forward_prop(state):
-    feature_vector = np.zeros((50, 1))
+    feature_vector = np.zeros((state_space_size, 1))
     feature_vector[state][0] = 1
 
     return np.matmul(relu(np.matmul(np.transpose(feature_vector), weights[0]["W"])), weights[1]["W"])
 
 def get_grads(state):
-    feature_vector = np.zeros((50, 1))
+    feature_vector = np.zeros((state_space_size, 1))
     feature_vector[state][0] = 1
     state_value = forward_prop(state)[0, 0]
     
-    return np.array([
+    return [
         np.transpose(np.matmul(weights[1]["W"], np.transpose(feature_vector))),
-        np.matmul(relu(np.transpose(weights[0]["W"])), feature_vector)
-    ])
+        relu(np.matmul(np.transpose(weights[0]["W"]), feature_vector))
+    ]
 
 def get_state_values():
-    for i in range(50):
-        print(f"State {i} value: {forward_prop(i)[0,0]}")
+    for i in range(state_space_size):
+        if i != 0 and i != state_space_size:
+            print(f"State {i} value: {forward_prop(i)[0,0]}")
     
 
 if __name__ == "__main__":
+    state_space_size = 30
+
     weights = [
         {
-            "W": np.ones((50,40))
+            "W": np.ones((state_space_size,40))
         },
         {
             "W": np.ones((40, 1))
@@ -38,29 +45,46 @@ if __name__ == "__main__":
     
     step_size = 0.01
     gamma = 0.7
-    num_of_episodes = 1000
+    num_of_episodes = 10000
+    state_value = []
     
     for n in range(num_of_episodes):
         reward = 0
         done = False
-        current_state = 25
-        
+        current_state = int(state_space_size / 2)
+
         while not done:
             action = np.random.choice([-1, 1])
             new_state = current_state + action
+            current_state_value = forward_prop(current_state)[0, 0]
+            new_state_value = forward_prop(new_state)[0, 0]
             reward = 0
             if new_state == 0:
                 done = True
                 reward = -10
-            elif new_state == 49:
+                new_state_value = 0
+            elif new_state == state_space_size - 1:
                 done = True
                 reward = 10
-            td_error = reward + gamma * forward_prop(new_state)[0, 0] - forward_prop(current_state)[0, 0]
+                new_state_value = 0
+            td_error = reward + gamma * new_state_value - current_state_value
             grads = get_grads(current_state)
             weights[0]["W"] += step_size * td_error * grads[0]
             weights[1]["W"] += step_size * td_error * grads[1]
-            
+            # print(f"Current State {current_state} value: {forward_prop(current_state)[0,0]}")
+            # print(f"Next state: {new_state}, td_error: {td_error}")
             current_state = new_state
+        
+        state_value.append(forward_prop(29)[0,0])
+        
+    plt.plot(state_value)
+    plt.xlabel("Episode")
+    plt.ylabel("Total Reward")
+    plt.title("Rewards per Episode")
+    # xtick_positions = np.arange(0, 5000 / 50)
+    # xtick_labels = xtick_positions * 50
+    # plt.xticks(xtick_positions, xtick_labels)
+    plt.show()  
     
     get_state_values()           
 
