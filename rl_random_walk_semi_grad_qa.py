@@ -8,13 +8,13 @@ def relu(inputs):
     return inputs
 
 def get_grads(state, action):
-    feature_vector = np.zeros((1, state_space_size))
-    feature_vector[0][state] = 1
-    w1_grads = weights[1]["W"][:, action] * feature_vector
-    w2_grads = np.transpose(relu(feature_vector))
+    feature_vector = np.zeros((num_of_actions, state_space_size))
+    feature_vector[action][state] = 1
+    w1_grads = np.matmul(weights[1]["W"], feature_vector)
+    w2_grads = relu(np.matmul(feature_vector, weights[0]["W"]))
     return np.array([
-        w1_grads,
-        w2_grads
+        np.transpose(w1_grads),
+        np.transpose(w2_grads)
     ])
 
 def get_qa_values(state):
@@ -25,23 +25,23 @@ def get_qa_values(state):
 def choose_action(state):
     qa_values = get_qa_values(state)
     
-    if np.random.randint() < 0.9:
+    if np.random.rand() < 0.9:
         return np.argmax(qa_values)
     else:
         return np.random.choice([0, 1])
     
 
 if __name__ == "__main__":
-    num_of_episodes = 1000
+    num_of_episodes = 100
     state_space_size = 10
     num_of_actions = 2
     
     weights = [
         {
-            "W": np.ones(state_space_size, 20)
+            "W": np.ones((state_space_size, 20))
         },
         {
-            "W": np.ones(20, num_of_actions)
+            "W": np.ones((20, num_of_actions))
         }
     ]
     
@@ -49,7 +49,7 @@ if __name__ == "__main__":
         done = False
         state = int(state_space_size / 2)
         action = choose_action(state)
-        state_action_value = get_qa_values(state)[action]
+        state_action_value = get_qa_values(state)[0][action]
         step_size = 0.001
         gamma = 0.5
         
@@ -71,15 +71,15 @@ if __name__ == "__main__":
                 td_error = reward + gamma * state_action_value
                 grads = get_grads(state, action)
                 weights[0]["W"] += step_size * td_error * grads[0]
-                weights[1]["W"][:, action] += step_size * td_error * grads[1]
+                weights[1]["W"] += step_size * td_error * grads[1]
                 break
             
             new_action = choose_action(new_state)
-            new_state_action_value = get_qa_values(new_state)[new_action]
+            new_state_action_value = get_qa_values(new_state)[0][new_action]
             td_error = reward + gamma * new_state_action_value - state_action_value
             grads = get_grads(state, action)
             weights[0]["W"] += step_size * td_error * grads[0]
-            weights[1]["W"][:, action] += step_size * td_error * grads[1]
+            weights[1]["W"] += step_size * td_error * grads[1]
             
             state = new_state
             action = new_action
