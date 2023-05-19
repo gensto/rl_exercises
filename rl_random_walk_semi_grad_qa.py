@@ -29,7 +29,6 @@ def choose_action(state):
         return np.argmax(qa_values)
     else:
         return np.random.choice([0, 1])
-    
 
 if __name__ == "__main__":
     num_of_episodes = 100
@@ -52,6 +51,7 @@ if __name__ == "__main__":
         state_action_value = get_qa_values(state)[0][action]
         step_size = 0.001
         gamma = 0.5
+        num_steps = 0
         
         while not done:
             # take action, observe reward
@@ -84,3 +84,6 @@ if __name__ == "__main__":
             state = new_state
             action = new_action
             state_action_value = new_state_action_value
+            num_steps += 1
+        
+        print(num_steps)
