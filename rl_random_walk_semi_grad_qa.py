@@ -12,10 +12,10 @@ def get_grads(state, action):
     feature_vector[action][state] = 1
     w1_grads = np.matmul(weights[1]["W"], feature_vector)
     w2_grads = relu(np.matmul(feature_vector, weights[0]["W"]))
-    return np.array([
+    return [
         np.transpose(w1_grads),
         np.transpose(w2_grads)
-    ])
+    ]
 
 def get_qa_values(state):
     feature_vector = np.zeros((1, state_space_size))
@@ -32,7 +32,7 @@ def choose_action(state):
 
 if __name__ == "__main__":
     num_of_episodes = 100
-    state_space_size = 10
+    state_space_size = 60
     num_of_actions = 2
     
     weights = [
@@ -61,10 +61,10 @@ if __name__ == "__main__":
                 new_state = state + action
             reward = 0
             if new_state == state_space_size - 1:
-                reward = 10
+                reward = 1
                 done = True
             elif new_state == 0:
-                reward = -10
+                reward = -1
                 done = True
             
             if done:
@@ -85,5 +85,7 @@ if __name__ == "__main__":
             action = new_action
             state_action_value = new_state_action_value
             num_steps += 1
+            # print(f"new state: {new_state}")
         
+        # print("done")
         print(num_steps)
