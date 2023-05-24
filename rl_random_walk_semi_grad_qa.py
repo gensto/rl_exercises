@@ -35,7 +35,7 @@ def choose_action(state):
 
 if __name__ == "__main__":
     num_of_episodes = 100
-    state_space_size = 30
+    state_space_size = 25
     num_of_actions = 2
     
     weights = [
