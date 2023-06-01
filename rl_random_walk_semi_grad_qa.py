@@ -29,7 +29,7 @@ def choose_action(state):
     qa_values = get_qa_values(state)
     
     if np.random.rand() < 0.9:
-        return np.argmax(qa_values)
+        return np.argmax(qa_values[0])
     else:
         return np.random.choice([0, 1])
 
